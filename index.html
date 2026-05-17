@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POKÉMARKET — Cartas TCG</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --red:      #E8322A;
+  --red2:     #FF5A52;
+  --red-dark: #B02020;
+  --gold:     #F5A623;
+  --gold2:    #FFD166;
+  --gold-dark:#C07800;
+  --navy:     #1B3A6B;
+  --navy2:    #2A5298;
+  --sky:      #5BC8F5;
+  --sky2:     #A8E6FF;
+  --cream:    #FFF8E7;
+  --cream2:   #FFF0CC;
+  --sand:     #F0D89A;
+  --leaf:     #48B74B;
+  --purple:   #8B4FD8;
+  --ink:      #1A0A00;
+  --white:    #FFFFFF;
+  --pixel:    'Press Start 2P', monospace;
+  --body:     'Nunito', sans-serif;
+  --shadow:   5px 5px 0 var(--ink);
+  --shadow-sm:3px 3px 0 var(--ink);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--cream);color:var(--ink);font-family:var(--body);overflow-x:hidden;cursor:none}
+a{text-decoration:none;color:inherit}
+button{border:none;background:none;cursor:none;font-family:inherit}
+
+/* CURSOR */
+#cur{position:fixed;width:16px;height:16px;background:var(--red);border:2px solid var(--ink);pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:width .15s,height .15s,background .15s}
+#cur2{position:fixed;width:8px;height:8px;background:var(--gold);border:2px solid var(--ink);pointer-events:none;z-index:99998;transform:translate(-50%,-50%)}
+body:has(button:hover) #cur,body:has(a:hover) #cur,body:has(.card-wrap:hover) #cur{width:24px;height:24px;background:var(--gold)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:500;background:var(--red);border-bottom:4px solid var(--ink);padding:0 2rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 0 var(--ink);min-height:64px}
+.nav-logo{font-family:var(--pixel);font-size:.9rem;color:var(--gold2);letter-spacing:.05em;text-shadow:3px 3px 0 var(--ink);display:flex;align-items:center;gap:.8rem;padding:1rem 0}
+.nav-logo-star{width:28px;height:28px;background:var(--gold);border:2px solid var(--ink);clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);flex-shrink:0}
+.nav-links{display:flex;list-style:none;align-items:center;gap:0;height:64px}
+.nav-links li{height:100%;display:flex;align-items:center}
+.nav-links a{font-family:var(--pixel);font-size:.42rem;letter-spacing:.05em;color:rgba(255,248,231,.75);display:flex;align-items:center;gap:.5rem;padding:0 1.3rem;border-left:2px solid rgba(255,255,255,.15);transition:background .15s,color .15s;height:100%;line-height:1}
+.nav-links a i{font-size:.75rem;opacity:.85}
+.nav-links a:hover{background:rgba(0,0,0,.15);color:var(--gold2)}
+.nav-links a:hover i{opacity:1}
+.nav-right{display:flex;align-items:center;gap:1rem;padding:.7rem 0}
+.nav-search-wrap{position:relative}
+.nav-search{background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);color:var(--white);font-family:var(--body);font-size:.85rem;font-weight:600;padding:.5rem 1rem .5rem 2.2rem;outline:none;border-radius:6px;width:200px;transition:background .2s,border-color .2s}
+.nav-search::placeholder{color:rgba(255,255,255,.5)}
+.nav-search:focus{background:rgba(255,255,255,.25);border-color:var(--gold2)}
+.search-icon{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none}
+.cart-btn{font-family:var(--pixel);font-size:.5rem;letter-spacing:.05em;padding:.6rem 1.2rem;background:var(--gold);color:var(--ink);border:2px solid var(--ink);box-shadow:var(--shadow-sm);border-radius:6px;transition:transform .1s,box-shadow .1s;display:flex;align-items:center;gap:.5rem}
+.cart-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.cart-btn:active{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--ink)}
+.cart-count{background:var(--red);color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.5rem;border:1px solid var(--ink)}
+
+/* ═══ HERO ═══ */
+#hero{
+  position:relative;overflow:hidden;
+  min-height:90vh;
+  display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;gap:2rem;
+  padding:4rem 3rem 0;
+  border-bottom:4px solid var(--ink);
+}
+
+/* HERO IMAGE BG */
+.hero-bg{
+  position:absolute;inset:0;z-index:0;
+  background:url('http://arqfra-ai.com/wp-content/uploads/2026/05/ChatGPT-Image-17-may-2026-05_56_12-p.m.png') center center / cover no-repeat;
+}
+.hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg, rgba(255,248,231,.55) 0%, rgba(255,248,231,.2) 50%, rgba(0,0,0,.1) 100%);
+}
+
+/* Pixel clouds via box-shadow trick */
+.pixel-cloud{
+  position:absolute;
+  image-rendering:pixelated;
+  animation:driftCloud linear infinite;
+}
+@keyframes driftCloud{from{transform:translateX(-200px)}to{transform:translateX(110vw)}}
+
+/* Pixel mountains */
+.pixel-mountain{position:absolute;bottom:0;left:0;right:0;height:45%}
+
+/* Pixel trees */
+.pixel-tree{position:absolute;bottom:0;image-rendering:pixelated}
+
+/* Sun pixelado */
+.pixel-sun{
+  position:absolute;top:3rem;right:12%;
+  width:64px;height:64px;
+  image-rendering:pixelated;
+  animation:sunPulse 3s ease-in-out infinite;
+}
+@keyframes sunPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.15)}}
+
+/* Pikachu pixel art */
+.pixel-pika{
+  position:absolute;
+  bottom:0;right:8%;
+  z-index:3;
+  image-rendering:pixelated;
+  animation:pikaFloat 2.4s ease-in-out infinite;
+}
+@keyframes pikaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+
+/* Stars twinkling */
+.pixel-star{
+  position:absolute;
+  font-family:monospace;
+  image-rendering:pixelated;
+  animation:twinkle 1.5s ease-in-out infinite;
+}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* Ground layer */
+.hero-ground{
+  position:absolute;bottom:0;left:0;right:0;
+  height:200px;z-index:2;
+}
+
+.hero-text{position:relative;z-index:10;padding-bottom:4rem}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--pixel);font-size:.45rem;background:var(--red);color:var(--white);border:2px solid var(--ink);padding:.5rem .9rem;box-shadow:var(--shadow-sm);margin-bottom:1.5rem}
+.hero-title{font-family:var(--pixel);font-size:clamp(1.2rem,3.5vw,2.4rem);line-height:1.5;letter-spacing:.03em;color:var(--ink);margin-bottom:1.2rem;text-shadow:4px 4px 0 #fff, 6px 6px 0 var(--navy)}
+.hero-title span{color:var(--red);text-shadow:4px 4px 0 var(--red-dark)}
+.hero-sub{font-family:var(--body);font-weight:700;font-size:1.05rem;color:var(--navy);background:rgba(255,255,255,.92);border:2px solid var(--ink);padding:.75rem 1rem;border-radius:4px;box-shadow:3px 3px 0 var(--ink);line-height:1.7;max-width:420px;margin-bottom:2rem}
+.hero-stats{display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
+.stat-box{background:var(--white);border:3px solid var(--ink);padding:.8rem 1.2rem;box-shadow:var(--shadow-sm);text-align:center;border-radius:4px}
+.stat-val{font-family:var(--pixel);font-size:1rem;color:var(--red);display:block;text-shadow:2px 2px 0 var(--red-dark)}
+.stat-lbl{font-family:var(--body);font-weight:700;font-size:.7rem;color:var(--ink);opacity:.6;margin-top:.25rem;display:block}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap}
+.btn-hero{font-family:var(--pixel);font-size:.55rem;letter-spacing:.03em;padding:.9rem 1.8rem;border:3px solid var(--ink);box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s;display:inline-flex;align-items:center;gap:.5rem;border-radius:4px}
+.btn-hero:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink)}
+.btn-hero:active{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--ink)}
+.btn-red{background:var(--red);color:var(--white)}
+.btn-navy{background:var(--navy);color:var(--white)}
+
+/* Hero card stack */
+.hero-cards-area{position:relative;z-index:10;display:flex;justify-content:center;align-items:flex-end;padding-bottom:0}
+.hero-card-stack{position:relative;width:280px;height:400px}
+.hcs-card{position:absolute;bottom:0;width:180px;border:3px solid var(--ink);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);transition:transform .3s}
+.hcs-card:nth-child(1){left:0;transform:rotate(-14deg) translateY(20px);z-index:1}
+.hcs-card:nth-child(2){left:40px;transform:rotate(-4deg);z-index:2}
+.hcs-card:nth-child(3){left:80px;transform:rotate(6deg) translateY(10px);z-index:3}
+.hcs-card:hover{z-index:20;transform:rotate(0deg) translateY(-20px) scale(1.05) !important}
+.hcs-card img{width:100%;height:100%;object-fit:cover;display:block;image-rendering:auto}
+
+/* Coin */
+.coin{position:absolute;width:48px;height:48px;background:var(--gold);border:3px solid var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--pixel);font-size:.55rem;color:var(--ink);box-shadow:var(--shadow-sm);animation:coinBob 2s ease-in-out infinite;z-index:15}
+@keyframes coinBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+/* TICKER */
+.ticker-strip{background:var(--navy);border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);padding:.6rem 0;overflow:hidden}
+.ticker-inner{display:flex;gap:2rem;animation:tickerAnim 30s linear infinite;width:max-content}
+.ticker-inner:hover{animation-play-state:paused}
+@keyframes tickerAnim{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{display:flex;align-items:center;gap:.6rem;white-space:nowrap;font-family:var(--pixel);font-size:.45rem;color:var(--gold2);letter-spacing:.03em;padding:0 1rem;border-right:2px solid rgba(255,255,255,.1)}
+.ticker-dot{width:8px;height:8px;border-radius:50%;border:2px solid var(--ink);flex-shrink:0}
+
+/* SECTIONS */
+.section{padding:5rem 3rem;position:relative}
+.section-header{text-align:center;margin-bottom:3rem}
+.section-eyebrow{font-family:var(--pixel);font-size:.45rem;letter-spacing:.1em;color:var(--red);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:.8rem}
+.section-eyebrow::before,.section-eyebrow::after{font-family:"Font Awesome 6 Free";font-weight:900;content:"\f005";color:var(--gold);font-size:.7rem}
+.section-title{font-family:var(--pixel);font-size:clamp(1.2rem,3vw,2rem);color:var(--ink);letter-spacing:.04em;text-shadow:3px 3px 0 var(--navy);margin-bottom:.5rem}
+.section-sub{font-weight:700;font-size:1rem;color:var(--ink);opacity:.55}
+
+/* PACKS */
+#packs{background:var(--cream)}
+.packs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;max-width:1100px;margin:0 auto}
+.pack-card{background:var(--white);border:3px solid var(--ink);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;position:relative}
+.pack-card:hover{transform:translate(-4px,-4px);box-shadow:9px 9px 0 var(--ink)}
+.pack-thumb{width:100%;height:200px;position:relative;overflow:hidden;border-bottom:3px solid var(--ink);background:#111}
+.pack-thumb img{width:100%;height:100%;object-fit:contain;padding:1rem;transition:transform .3s}
+.pack-card:hover .pack-thumb img{transform:scale(1.08) rotate(-2deg)}
+.pack-tag{position:absolute;top:.6rem;right:.6rem;font-family:var(--pixel);font-size:.38rem;letter-spacing:.05em;padding:.3rem .6rem;border:2px solid var(--ink);border-radius:4px;box-shadow:2px 2px 0 var(--ink)}
+.pack-body{padding:1.2rem}
+.pack-name{font-family:var(--pixel);font-size:.7rem;color:var(--ink);margin-bottom:.3rem}
+.pack-series{font-weight:700;font-size:.78rem;color:var(--ink);opacity:.45;margin-bottom:1rem}
+.pack-price-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.pack-price{font-family:var(--pixel);font-size:1.1rem;color:var(--red);text-shadow:2px 2px 0 var(--red-dark)}
+.pack-rate{font-family:var(--pixel);font-size:.38rem;color:var(--leaf);background:rgba(72,183,75,.12);border:2px solid var(--leaf);padding:.3rem .5rem;border-radius:4px}
+.pack-btn{width:100%;font-family:var(--pixel);font-size:.48rem;letter-spacing:.04em;padding:.8rem;border:2px solid var(--ink);border-radius:4px;background:var(--navy);color:var(--white);box-shadow:3px 3px 0 var(--ink);transition:transform .1s,box-shadow .1s,background .15s}
+.pack-btn:hover{background:var(--red);transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+
+/* SINGLES */
+#singles{background:linear-gradient(180deg,var(--sky2) 0%,var(--cream) 100%);border-top:4px solid var(--ink)}
+.filters-row{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-bottom:2.5rem}
+.filter-btn{font-family:var(--pixel);font-size:.42rem;letter-spacing:.04em;padding:.55rem 1rem;border:2px solid var(--ink);border-radius:4px;background:var(--white);color:var(--ink);box-shadow:2px 2px 0 var(--ink);transition:all .12s}
+.filter-btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+.filter-btn.active{background:var(--red);color:var(--white);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1.5rem;max-width:1300px;margin:0 auto}
+
+/* CARD */
+.card-wrap{border:3px solid var(--ink);border-radius:10px;overflow:hidden;background:var(--white);box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;position:relative}
+.card-wrap:hover{transform:translate(-4px,-4px) rotate(-1deg);box-shadow:8px 8px 0 var(--ink)}
+.card-img-area{width:100%;position:relative;overflow:hidden;border-bottom:3px solid var(--ink);background:#0a0a1a}
+.card-img-area img{width:100%;display:block;transition:transform .35s;image-rendering:auto}
+.card-wrap:hover .card-img-area img{transform:scale(1.04)}
+.card-shine{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.45) 50%,rgba(255,255,255,0) 80%);transform:translateX(-100%);transition:transform .5s ease;pointer-events:none}
+.card-wrap:hover .card-shine{transform:translateX(100%)}
+.card-rarity-pip{position:absolute;top:.5rem;left:.5rem;z-index:5;font-family:var(--pixel);font-size:.45rem;padding:.3rem .5rem;border:2px solid var(--ink);border-radius:4px;box-shadow:2px 2px 0 var(--ink)}
+.card-cond{position:absolute;top:.5rem;right:.5rem;z-index:5;font-family:var(--pixel);font-size:.38rem;padding:.25rem .45rem;border:2px solid var(--ink);border-radius:4px}
+.card-details{padding:.8rem}
+.card-name{font-family:var(--pixel);font-size:.55rem;color:var(--ink);margin-bottom:.2rem;letter-spacing:.02em}
+.card-set-label{font-weight:700;font-size:.7rem;color:var(--ink);opacity:.4;margin-bottom:.6rem}
+.card-bottom{display:flex;justify-content:space-between;align-items:center}
+.card-price{font-family:var(--pixel);font-size:.75rem;color:var(--red);text-shadow:2px 2px 0 var(--red-dark)}
+.add-btn{font-family:var(--pixel);font-size:.38rem;padding:.4rem .7rem;border:2px solid var(--ink);background:var(--gold);color:var(--ink);box-shadow:2px 2px 0 var(--ink);border-radius:4px;transition:transform .1s,box-shadow .1s}
+.add-btn:hover{background:var(--gold2);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+
+/* TRUST */
+#trust{background:var(--navy);border-top:4px solid var(--ink);border-bottom:4px solid var(--ink);padding:5rem 3rem}
+#trust .section-title{color:var(--gold2);text-shadow:3px 3px 0 var(--red-dark)}
+#trust .section-eyebrow{color:var(--gold)}
+#trust .section-sub{color:rgba(255,240,200,.5)}
+.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:1100px;margin:0 auto}
+.trust-card{background:rgba(255,255,255,.06);border:3px solid rgba(255,255,255,.15);border-radius:8px;padding:1.8rem;transition:background .2s,border-color .2s,transform .15s}
+.trust-card:hover{background:rgba(255,255,255,.1);border-color:var(--gold);transform:translateY(-4px)}
+.trust-stars{color:var(--gold);font-size:1.1rem;margin-bottom:.9rem;letter-spacing:.1em}
+.trust-text{font-weight:600;font-size:.9rem;color:rgba(255,248,231,.75);line-height:1.75;margin-bottom:1.2rem;font-style:italic}
+.trust-author{display:flex;align-items:center;gap:.8rem}
+.trust-av{width:40px;height:40px;border-radius:50%;border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--pixel);font-size:.6rem;color:var(--ink);flex-shrink:0;box-shadow:2px 2px 0 var(--ink)}
+.trust-name{font-family:var(--pixel);font-size:.42rem;color:var(--gold2);margin-bottom:.2rem}
+.trust-meta{font-weight:600;font-size:.72rem;color:rgba(255,248,231,.35)}
+
+/* GUARANTEES */
+#guarantees{background:var(--gold2);border-top:4px solid var(--ink);border-bottom:4px solid var(--ink);padding:3rem}
+.guar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;max-width:1100px;margin:0 auto}
+.guar-item{background:var(--white);border:3px solid var(--ink);border-radius:8px;padding:1.5rem;text-align:center;box-shadow:var(--shadow-sm);transition:transform .12s,box-shadow .12s}
+.guar-item:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 var(--ink)}
+.guar-icon{font-size:1.8rem;margin-bottom:.75rem;display:block;color:var(--red)}
+.guar-title{font-family:var(--pixel);font-size:.48rem;color:var(--ink);margin-bottom:.5rem;letter-spacing:.04em}
+.guar-desc{font-weight:600;font-size:.78rem;color:var(--ink);opacity:.55;line-height:1.65}
+
+/* NEWSLETTER */
+#newsletter{background:var(--red);border-top:4px solid var(--ink);padding:5rem 3rem;text-align:center;position:relative;overflow:hidden}
+#newsletter::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(0,0,0,.05) 10px,rgba(0,0,0,.05) 20px)}
+.nl-inner{position:relative;z-index:1}
+.nl-title{font-family:var(--pixel);font-size:clamp(1rem,3vw,1.6rem);color:var(--gold2);text-shadow:3px 3px 0 var(--red-dark);margin-bottom:.5rem}
+.nl-sub{font-weight:700;font-size:1rem;color:rgba(255,248,231,.7);margin-bottom:2rem}
+.nl-form{display:flex;gap:0;max-width:440px;margin:0 auto;border:3px solid var(--ink);border-radius:6px;overflow:hidden;box-shadow:var(--shadow)}
+.nl-input{flex:1;background:var(--white);border:none;color:var(--ink);font-family:var(--body);font-weight:700;font-size:.9rem;padding:.85rem 1.2rem;outline:none}
+.nl-btn{font-family:var(--pixel);font-size:.48rem;letter-spacing:.04em;padding:.85rem 1.4rem;background:var(--gold);color:var(--ink);border-left:3px solid var(--ink);transition:background .15s;white-space:nowrap}
+.nl-btn:hover{background:var(--gold2)}
+
+/* FOOTER */
+footer{background:var(--ink);color:rgba(255,248,231,.8);padding:3rem;border-top:4px solid var(--navy);display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem}
+.foot-logo{font-family:var(--pixel);font-size:1rem;color:var(--gold2);text-shadow:2px 2px 0 var(--red);margin-bottom:.75rem;letter-spacing:.05em}
+.foot-desc{font-weight:600;font-size:.8rem;color:rgba(255,248,231,.4);line-height:1.7;max-width:250px}
+.foot-col-title{font-family:var(--pixel);font-size:.42rem;color:var(--gold);margin-bottom:.9rem;letter-spacing:.08em}
+.foot-links{list-style:none;display:flex;flex-direction:column;gap:.5rem}
+.foot-links a{font-weight:600;font-size:.82rem;color:rgba(255,248,231,.4);transition:color .2s}
+.foot-links a:hover{color:var(--gold2)}
+.foot-bottom{grid-column:1/-1;border-top:2px solid rgba(255,255,255,.06);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center}
+.foot-copy{font-family:var(--pixel);font-size:.38rem;color:rgba(255,248,231,.2);letter-spacing:.06em}
+
+/* CART DRAWER */
+#cart-drawer{position:fixed;right:-460px;top:0;bottom:0;width:420px;background:var(--cream);border-left:4px solid var(--ink);z-index:600;transition:right .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 0 var(--ink)}
+#cart-drawer.open{right:0}
+.cart-header{padding:1.2rem 1.5rem;background:var(--red);border-bottom:3px solid var(--ink);display:flex;justify-content:space-between;align-items:center}
+.cart-title{font-family:var(--pixel);font-size:.75rem;color:var(--gold2);text-shadow:2px 2px 0 var(--red-dark)}
+.cart-close{font-family:var(--pixel);font-size:.45rem;color:var(--white);padding:.4rem .8rem;border:2px solid rgba(255,255,255,.4);border-radius:4px;transition:background .15s}
+.cart-close:hover{background:rgba(255,255,255,.15)}
+.cart-body{flex:1;overflow-y:auto;padding:1.2rem}
+.cart-empty{text-align:center;padding:3rem 1rem;font-family:var(--pixel);font-size:.48rem;color:var(--ink);opacity:.35;line-height:2}
+.cart-item{display:flex;gap:.9rem;padding:1rem 0;border-bottom:2px dashed rgba(26,10,0,.15);align-items:flex-start}
+.ci-thumb{width:60px;height:84px;border:2px solid var(--ink);border-radius:6px;flex-shrink:0;overflow:hidden;box-shadow:3px 3px 0 var(--ink);background:#111}
+.ci-thumb img{width:100%;height:100%;object-fit:contain}
+.ci-name{font-family:var(--pixel);font-size:.48rem;color:var(--ink);margin-bottom:.25rem;line-height:1.6}
+.ci-set{font-weight:700;font-size:.7rem;color:var(--ink);opacity:.4;margin-bottom:.4rem}
+.ci-price{font-family:var(--pixel);font-size:.65rem;color:var(--red)}
+.ci-remove{font-family:var(--pixel);font-size:.38rem;color:var(--ink);opacity:.3;margin-left:auto;flex-shrink:0;transition:opacity .15s,color .15s;padding:.2rem .4rem}
+.ci-remove:hover{opacity:1;color:var(--red)}
+.cart-footer{padding:1.2rem 1.5rem;border-top:3px solid var(--ink);background:var(--cream2)}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.ct-lbl{font-family:var(--pixel);font-size:.5rem;color:var(--ink);opacity:.5}
+.ct-val{font-family:var(--pixel);font-size:1.2rem;color:var(--red);text-shadow:2px 2px 0 var(--red-dark)}
+.checkout-btn{width:100%;font-family:var(--pixel);font-size:.55rem;letter-spacing:.04em;padding:.9rem;background:var(--gold);color:var(--ink);border:2px solid var(--ink);box-shadow:var(--shadow-sm);border-radius:4px;transition:transform .1s,box-shadow .1s,background .15s}
+.checkout-btn:hover{background:var(--gold2);transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);z-index:700;background:var(--navy);color:var(--gold2);border:3px solid var(--ink);border-radius:6px;padding:.9rem 1.6rem;display:flex;align-items:center;gap:.7rem;box-shadow:var(--shadow);opacity:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast-icon{font-size:1.1rem}
+.toast-text{font-family:var(--pixel);font-size:.45rem;letter-spacing:.04em}
+
+/* IMG ERROR FALLBACK */
+.card-img-area img.img-error{filter:hue-rotate(180deg) brightness(.6);opacity:.6}
+
+@media(max-width:900px){
+  #hero{grid-template-columns:1fr;text-align:center;padding:5rem 1.5rem 0;min-height:auto}
+  .hero-btns,.hero-stats{justify-content:center}
+  .hero-sub{max-width:none}
+  .hero-cards-area{margin-top:2rem}
+  .packs-grid{grid-template-columns:1fr;max-width:380px}
+  .trust-grid{grid-template-columns:1fr}
+  .guar-grid{grid-template-columns:repeat(2,1fr)}
+  footer{grid-template-columns:1fr 1fr}
+  nav .nav-links{display:none}
+  .nav-search{width:130px}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur2"></div>
+
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon"><i class="fa-solid fa-bolt"></i></span>
+  <span class="toast-text" id="toastText">Carta añadida al carrito</span>
+</div>
+
+<!-- CART -->
+<div id="cart-drawer">
+  <div class="cart-header">
+    <div class="cart-title"><i class="fa-solid fa-shield"></i> MI COLECCIÓN</div>
+    <button class="cart-close" onclick="toggleCart()"><i class="fa-solid fa-xmark"></i> CERRAR</button>
+  </div>
+  <div class="cart-body" id="cart-body">
+    <div class="cart-empty" id="cart-empty">¡Tu cofre está vacío!<br><br>Añade cartas para empezar tu aventura</div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total-row">
+      <span class="ct-lbl">TOTAL</span>
+      <span class="ct-val" id="cart-total">$0.00</span>
+    </div>
+    <button class="checkout-btn" onclick="showToast('<i class=\'fa-solid fa-credit-card\'></i>','Redirigiendo al pago seguro...')"><i class="fa-solid fa-credit-card"></i> FINALIZAR COMPRA</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-star"></div>
+    POKÉMARKET
+  </div>
+  <ul class="nav-links">
+    <li><a href="#packs"><i class="fa-solid fa-box-open"></i> Sobres</a></li>
+    <li><a href="#singles"><i class="fa-solid fa-layer-group"></i> Singles</a></li>
+    <li><a href="#trust"><i class="fa-solid fa-star"></i> Reseñas</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="nav-search-wrap">
+      <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+      <input type="text" class="nav-search" placeholder="Buscar carta..." oninput="filterCards(this.value)" id="searchInput">
+    </div>
+    <button class="cart-btn" onclick="toggleCart()">
+      <i class="fa-solid fa-bag-shopping"></i> CARRITO
+      <span class="cart-count" id="cart-count">0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <!-- Pixel art background SVG -->
+  <div class="hero-bg"></div>
+
+
+  <div class="hero-text">
+    <div class="hero-badge"><i class="fa-solid fa-bolt"></i> Nueva colección disponible</div>
+    <h1 class="hero-title">
+      ¡Las mejores<br>
+      <span>cartas Pokémon</span><br>
+      del mundo!
+    </h1>
+    <p class="hero-sub">Cartas TCG raras, holográficas y de edición limitada. Condición Near Mint certificada. Envío en 24h.</p>
+    <div class="hero-stats">
+      <div class="stat-box"><span class="stat-val">12K+</span><span class="stat-lbl">Cartas en stock</span></div>
+      <div class="stat-box"><span class="stat-val">98%</span><span class="stat-lbl">Satisfacción</span></div>
+      <div class="stat-box"><span class="stat-val">24h</span><span class="stat-lbl">Envío garantizado</span></div>
+    </div>
+    <div class="hero-btns">
+      <a href="#singles" class="btn-hero btn-red"><i class="fa-solid fa-book-open"></i> VER CATÁLOGO</a>
+      <a href="#packs" class="btn-hero btn-navy"><i class="fa-solid fa-box-open"></i> ABRIR SOBRES</a>
+    </div>
+  </div>
+
+  <div class="hero-cards-area">
+    <div class="hero-card-stack">
+      <!-- Real card images from pokemontcg.io CDN -->
+      <div class="hcs-card" style="height:252px">
+        <img src="https://images.pokemontcg.io/sv3/215_hires.png"
+             onerror="this.src='https://images.pokemontcg.io/sv3/215.png';this.onerror=null"
+             alt="Charizard ex" loading="lazy">
+      </div>
+      <div class="hcs-card" style="height:252px">
+        <img src="https://images.pokemontcg.io/swsh7/215_hires.png"
+             onerror="this.src='https://images.pokemontcg.io/swsh7/215.png';this.onerror=null"
+             alt="Umbreon VMAX Alt Art" loading="lazy">
+      </div>
+      <div class="hcs-card" style="height:252px">
+        <img src="https://images.pokemontcg.io/swsh12pt5/160_hires.png"
+             onerror="this.src='https://images.pokemontcg.io/swsh12pt5/160.png';this.onerror=null"
+             alt="Crown Zenith" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-strip">
+  <div class="ticker-inner" id="ticker-inner"></div>
+</div>
+
+<!-- PACKS -->
+<section id="packs" class="section">
+  <div class="section-header">
+    <div class="section-eyebrow">Sobres y Sets</div>
+    <h2 class="section-title">¡Abre tu sobre!</h2>
+    <p class="section-sub">¿Saldrá la carta que buscas? ¡Descúbrelo!</p>
+  </div>
+  <div class="packs-grid reveal" id="packs-grid"></div>
+</section>
+
+<!-- SINGLES -->
+<section id="singles" class="section">
+  <div class="section-header">
+    <div class="section-eyebrow">Catálogo Singles</div>
+    <h2 class="section-title">Encuentra tu carta</h2>
+    <p class="section-sub">Más de 12,000 cartas únicas. Todas certificadas Near Mint.</p>
+  </div>
+  <div class="filters-row" id="filters-row"></div>
+  <div class="cards-grid" id="cards-grid"></div>
+</section>
+
+<!-- TRUST -->
+<section id="trust" class="section">
+  <div class="section-header">
+    <div class="section-eyebrow">Comunidad</div>
+    <h2 class="section-title">Lo que dicen nuestros héroes</h2>
+    <p class="section-sub">Miles de coleccionistas confían en nosotros</p>
+  </div>
+  <div class="trust-grid reveal">
+    <div class="trust-card">
+      <div class="trust-stars">★★★★★</div>
+      <p class="trust-text">"Compré un Charizard ex y llegó en perfecto estado con embalaje premium. ¡Increíble servicio y rapidísimo!"</p>
+      <div class="trust-author">
+        <div class="trust-av" style="background:var(--gold)">R</div>
+        <div><div class="trust-name">Rodrigo M.</div><div class="trust-meta">Coleccionista · 340 compras</div></div>
+      </div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-stars">★★★★★</div>
+      <p class="trust-text">"Los precios más competitivos del mercado. La verificación de autenticidad me da tranquilidad total. ¡Vuelvo siempre!"</p>
+      <div class="trust-author">
+        <div class="trust-av" style="background:var(--purple)">A</div>
+        <div><div class="trust-name">Alejandra V.</div><div class="trust-meta">Jugadora TCG · 89 compras</div></div>
+      </div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-stars">★★★★★</div>
+      <p class="trust-text">"Encontré el Pikachu Illustrator que llevaba años buscando. El servicio al cliente es el mejor que he probado."</p>
+      <div class="trust-author">
+        <div class="trust-av" style="background:var(--leaf)">C</div>
+        <div><div class="trust-name">Carlos P.</div><div class="trust-meta">Inversor TCG · 1,200 compras</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GUARANTEES -->
+<section id="guarantees">
+  <div class="guar-grid">
+    <div class="guar-item reveal"><span class="guar-icon"><i class="fa-solid fa-shield-halved"></i></span><div class="guar-title">Autenticidad</div><p class="guar-desc">Todas las cartas verificadas PSA/BGS antes de listarse.</p></div>
+    <div class="guar-item reveal"><span class="guar-icon"><i class="fa-solid fa-box-archive"></i></span><div class="guar-title">Envío seguro</div><p class="guar-desc">Penny sleeves + top loaders + embalaje rígido en cada pedido.</p></div>
+    <div class="guar-item reveal"><span class="guar-icon"><i class="fa-solid fa-tag"></i></span><div class="guar-title">Mejor precio</div><p class="guar-desc">¿La encuentras más barata? La igualamos sin preguntas.</p></div>
+    <div class="guar-item reveal"><span class="guar-icon"><i class="fa-solid fa-rotate-left"></i></span><div class="guar-title">30 días</div><p class="guar-desc">Devolución completa garantizada si no estás satisfecho.</p></div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section id="newsletter">
+  <div class="nl-inner">
+    <h2 class="nl-title reveal">¡No te pierdas ningún drop!</h2>
+    <p class="nl-sub reveal">Alertas de restock, cartas exclusivas y ofertas de coleccionista</p>
+    <div class="nl-form reveal">
+      <input type="email" class="nl-input" placeholder="tu@correo.com" id="nlEmail">
+      <button class="nl-btn" onclick="doSubscribe()">¡SUSCRIBIR!</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="foot-logo"><i class="fa-solid fa-star"></i> POKÉMARKET</div>
+    <p class="foot-desc">El marketplace de cartas Pokémon más grande en español. Coleccionistas y jugadores confían en nosotros desde 2019.</p>
+  </div>
+  <div>
+    <div class="foot-col-title">TIENDA</div>
+    <ul class="foot-links">
+      <li><a href="#">Todas las cartas</a></li>
+      <li><a href="#">Sobres y sets</a></li>
+      <li><a href="#">Graded cards</a></li>
+      <li><a href="#">Accesorios</a></li>
+    </ul>
+  </div>
+  <div>
+    <div class="foot-col-title">COLECCIONISTA</div>
+    <ul class="foot-links">
+      <li><a href="#">Price guide</a></li>
+      <li><a href="#">Verificación PSA</a></li>
+      <li><a href="#">Blog TCG</a></li>
+      <li><a href="#">Comunidad</a></li>
+    </ul>
+  </div>
+  <div>
+    <div class="foot-col-title">SOPORTE</div>
+    <ul class="foot-links">
+      <li><a href="#">Cómo comprar</a></li>
+      <li><a href="#">Envíos</a></li>
+      <li><a href="#">Devoluciones</a></li>
+      <li><a href="#">Contacto</a></li>
+    </ul>
+  </div>
+  <div class="foot-bottom">
+    <div class="foot-copy">© 2025 POKÉMARKET · Pokémon es marca de Nintendo/Game Freak · Todos los derechos reservados</div>
+  </div>
+</footer>
+
+<script>
+/* CURSOR */
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0,tx=0,ty=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function loop(){tx+=(mx-tx)*.12;ty+=(my-ty)*.12;cur2.style.left=tx+'px';cur2.style.top=ty+'px';requestAnimationFrame(loop)})();
+
+/* REVEAL */
+function initReveal(){
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}});
+  },{threshold:.08});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+}
+
+/* CART */
+let cart=[];
+let cartOpen=false;
+
+function toggleCart(){
+  cartOpen=!cartOpen;
+  document.getElementById('cart-drawer').classList.toggle('open',cartOpen);
+}
+
+function addToCart(name,set,price,imgUrl){
+  cart.push({name,set,price:parseFloat(price),imgUrl,id:Date.now()+Math.random()});
+  renderCart();
+  document.getElementById('cart-count').textContent=cart.length;
+  showToast('<i class="fa-solid fa-bolt"></i>',`¡${name} añadida al cofre!`);
+  if(!cartOpen)toggleCart();
+}
+
+function removeItem(id){
+  cart=cart.filter(c=>c.id!==id);
+  renderCart();
+  document.getElementById('cart-count').textContent=cart.length;
+}
+
+function renderCart(){
+  const body=document.getElementById('cart-body');
+  const empty=document.getElementById('cart-empty');
+  const total=cart.reduce((a,c)=>a+c.price,0);
+  document.getElementById('cart-total').textContent='$'+total.toFixed(2);
+  if(cart.length===0){body.innerHTML='';body.appendChild(empty);empty.style.display='block';return}
+  empty.style.display='none';
+  body.innerHTML='';
+  cart.forEach(item=>{
+    const div=document.createElement('div');div.className='cart-item';
+    div.innerHTML=`
+      <div class="ci-thumb"><img src="${item.imgUrl}" alt="${item.name}" onerror="this.style.opacity='.3'"></div>
+      <div style="flex:1">
+        <div class="ci-name">${item.name}</div>
+        <div class="ci-set">${item.set}</div>
+        <div class="ci-price">$${item.price.toFixed(2)}</div>
+      </div>
+      <button class="ci-remove" onclick="removeItem(${item.id})"><i class="fa-solid fa-xmark"></i></button>
+    `;
+    body.appendChild(div);
+  });
+}
+
+/* TOAST */
+let toastTimer;
+function showToast(icon,text){
+  const t=document.getElementById('toast');
+  document.getElementById('toastIcon').innerHTML=icon||'<i class="fa-solid fa-bolt"></i>';
+  document.getElementById('toastText').textContent=text;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* TICKER */
+const tickerData=[
+  {user:'CarlosP',card:'Charizard ex PSA10',dot:'#E8322A',label:'🔥 RARO'},
+  {user:'AnaM',card:'Pikachu Illustrator',dot:'#F5A623',label:'⭐ ULTRA'},
+  {user:'JuanD',card:'Mewtwo ex SAR',dot:'#8B4FD8',label:'💎 SECRETO'},
+  {user:'LuisR',card:'Umbreon VMAX Alt',dot:'#1B3A6B',label:'🌑 SPECIAL'},
+  {user:'SofiaV',card:'Rayquaza VMAX',dot:'#48B74B',label:'🐉 RARO'},
+  {user:'PabloG',card:'Gardevoir ex SAR',dot:'#8B4FD8',label:'🔮 ULTRA'},
+  {user:'MariaL',card:'Miraidon ex',dot:'#5BC8F5',label:'⚡ SPECIAL'},
+];
+function buildTicker(){
+  const inner=document.getElementById('ticker-inner');
+  const all=[...tickerData,...tickerData];
+  all.forEach(p=>{
+    const item=document.createElement('div');item.className='ticker-item';
+    item.innerHTML=`<div class="ticker-dot" style="background:${p.dot}"></div><span><strong style="color:var(--gold2)">${p.user}</strong> compró <strong style="color:#fff">${p.card}</strong> — <span style="color:${p.dot}">${p.label}</span></span>`;
+    inner.appendChild(item);
+  });
+}
+buildTicker();
+
+/* ─── REAL CARD DATA with pokemontcg.io CDN images ─── */
+// Image pattern: https://images.pokemontcg.io/{setId}/{number}.png  or _hires.png
+// Set IDs: sv3=Obsidian Flames, sv2=Paldea Evolved, swsh12=Crown Zenith,
+//          swsh12pt5=Brilliant Stars special, swsh4=Vivid Voltage (151 promo), sv1=Scarlet & Violet base
+//          mcd19=Pikachu promos, dp3=Secret Wonders, swsh7=Evolving Skies, swsh10=Astral Radiance
+
+const PACKS=[
+  {
+    name:'Obsidian Flames',series:'Scarlet & Violet',cards:9,price:'5.99',
+    tag:'🔥 HOT',tagBg:'#E8322A',tagColor:'#fff',pullRate:'1 raro cada 4',
+    // Pack art: use a featured card as thumb
+    imgUrl:'https://images.pokemontcg.io/sv3/215.png',
+    imgBg:'#1a0808'
+  },
+  {
+    name:'Paldea Evolved',series:'Scarlet & Violet',cards:10,price:'6.99',
+    tag:'✨ NUEVO',tagBg:'#1B3A6B',tagColor:'#A8E6FF',pullRate:'1 raro cada 3',
+    imgUrl:'https://images.pokemontcg.io/sv2/193.png',
+    imgBg:'#04103a'
+  },
+  {
+    name:'Crown Zenith',series:'Sword & Shield',cards:11,price:'8.99',
+    tag:'💎 EXCLUSIVO',tagBg:'#8B4FD8',tagColor:'#fff',pullRate:'1 raro cada 2',
+    imgUrl:'https://images.pokemontcg.io/swsh12pt5/160.png',
+    imgBg:'#180830'
+  },
+];
+
+PACKS.forEach(pack=>{
+  const div=document.createElement('div');div.className='pack-card reveal';
+  div.innerHTML=`
+    <div class="pack-thumb" style="background:${pack.imgBg}">
+      <img src="${pack.imgUrl}" alt="${pack.name}"
+           onerror="this.style.opacity='.4';this.style.filter='grayscale(1)'"
+           loading="lazy">
+      <div class="pack-tag" style="background:${pack.tagBg};color:${pack.tagColor};border-color:rgba(0,0,0,.3)">${pack.tag}</div>
+    </div>
+    <div class="pack-body">
+      <div class="pack-name">${pack.name}</div>
+      <div class="pack-series">${pack.series} · ${pack.cards} cartas por sobre</div>
+      <div class="pack-price-row">
+        <div class="pack-price">$${pack.price}</div>
+        <div class="pack-rate">${pack.pullRate}</div>
+      </div>
+      <button class="pack-btn" onclick="addToCart('Sobre ${pack.name}','${pack.series}','${pack.price}','${pack.imgUrl}')"><i class="fa-solid fa-cart-plus"></i> COMPRAR SOBRE</button>
+    </div>
+  `;
+  document.getElementById('packs-grid').appendChild(div);
+  // 3D tilt
+  div.addEventListener('mousemove',e=>{
+    const r=div.getBoundingClientRect();
+    const rx=(e.clientY-r.top-r.height/2)/r.height*-10;
+    const ry=(e.clientX-r.left-r.width/2)/r.width*10;
+    div.style.transform=`perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) translate(-4px,-4px)`;
+    div.style.boxShadow=`${5-ry/3}px ${5+rx/3}px 0 var(--ink)`;
+  });
+  div.addEventListener('mouseleave',()=>{div.style.transform='';div.style.boxShadow='';});
+});
+
+/* ─── SINGLES — real card images ─── */
+// Using pokemontcg.io verified card IDs
+const CARDS=[
+  {name:'Charizard ex',     set:'Obsidian Flames',   price:'289.99',type:'Fuego',     rarity:3,cond:'NM',
+   img:'https://images.pokemontcg.io/sv3/215.png',    filter:'fuego'},
+  {name:'Mewtwo ex',        set:'Pokémon 151',        price:'89.99', type:'Psíquico',  rarity:3,cond:'NM',
+   img:'https://images.pokemontcg.io/sv3pt5/205.png', filter:'psiquico'},
+  {name:'Pikachu ex',       set:'Paldea Evolved',     price:'45.99', type:'Eléctrico', rarity:2,cond:'NM',
+   img:'https://images.pokemontcg.io/sv2/193.png',    filter:'electrico'},
+  {name:'Gardevoir ex',     set:'Paldea Evolved',     price:'34.99', type:'Psíquico',  rarity:2,cond:'LP',
+   img:'https://images.pokemontcg.io/sv2/195.png',    filter:'psiquico'},
+  {name:'Miraidon ex',      set:'Scarlet & Violet',   price:'28.99', type:'Eléctrico', rarity:2,cond:'NM',
+   img:'https://images.pokemontcg.io/sv1/243.png',    filter:'electrico'},
+  {name:'Koraidon ex',      set:'Scarlet & Violet',   price:'24.99', type:'Lucha',     rarity:2,cond:'NM',
+   img:'https://images.pokemontcg.io/sv1/247.png',    filter:'lucha'},
+  {name:'Giratina VSTAR',   set:'Lost Origin',        price:'18.99', type:'Fantasma',  rarity:3,cond:'NM',
+   img:'https://images.pokemontcg.io/swsh11/197.png', filter:'fantasma'},
+  {name:'Umbreon VMAX',     set:'Evolving Skies',     price:'72.99', type:'Oscuro',    rarity:3,cond:'NM',
+   img:'https://images.pokemontcg.io/swsh7/215.png',  filter:'oscuro'},
+  {name:'Rayquaza VMAX',    set:'Evolving Skies',     price:'48.99', type:'Dragón',    rarity:3,cond:'LP',
+   img:'https://images.pokemontcg.io/swsh7/217.png',  filter:'dragon'},
+  {name:'Lugia VSTAR',      set:'Silver Tempest',     price:'38.99', type:'Psíquico',  rarity:2,cond:'NM',
+   img:'https://images.pokemontcg.io/swsh12/211.png', filter:'psiquico'},
+  {name:'Mew VMAX',         set:'Fusion Strike',      price:'22.99', type:'Psíquico',  rarity:2,cond:'NM',
+   img:'https://images.pokemontcg.io/swsh8/269.png',  filter:'psiquico'},
+  {name:'Arceus VSTAR',     set:'Brilliant Stars',    price:'15.99', type:'Normal',    rarity:2,cond:'NM',
+   img:'https://images.pokemontcg.io/swsh9/176.png',  filter:'normal'},
+];
+
+const RARITY_STYLE={
+  1:{bg:'#48B74B',color:'#fff',label:'C'},
+  2:{bg:'#2A5298',color:'#fff',label:'R'},
+  3:{bg:'#E8322A',color:'#fff',label:'UR'},
+};
+const COND_STYLE={
+  'NM':{bg:'#48B74B',color:'#fff'},
+  'LP':{bg:'#2A5298',color:'#fff'},
+  'MP':{bg:'#F5A623',color:'#1A0A00'},
+};
+
+const FILTERS=['Todos','Fuego','Psíquico','Eléctrico','Lucha','Oscuro','Dragón','Fantasma','Normal'];
+let activeFilter='Todos';
+let searchQuery='';
+
+FILTERS.forEach(f=>{
+  const btn=document.createElement('button');
+  btn.className='filter-btn'+(f==='Todos'?' active':'');
+  btn.textContent=f;
+  btn.onclick=()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter=f;
+    renderCards();
+  };
+  document.getElementById('filters-row').appendChild(btn);
+});
+
+function filterCards(q){searchQuery=q;renderCards()}
+
+function renderCards(){
+  const grid=document.getElementById('cards-grid');
+  grid.innerHTML='';
+  const filtered=CARDS.filter(c=>{
+    const okType=activeFilter==='Todos'||c.type===activeFilter;
+    const q=searchQuery.toLowerCase();
+    const okSearch=!q||c.name.toLowerCase().includes(q)||c.set.toLowerCase().includes(q)||c.type.toLowerCase().includes(q);
+    return okType&&okSearch;
+  });
+  filtered.forEach((card,i)=>{
+    const rs=RARITY_STYLE[card.rarity]||RARITY_STYLE[1];
+    const cs=COND_STYLE[card.cond]||COND_STYLE['NM'];
+    const wrap=document.createElement('div');wrap.className='card-wrap reveal';
+    wrap.style.transitionDelay=(i%6*.07)+'s';
+    wrap.innerHTML=`
+      <div class="card-img-area">
+        <img src="${card.img}" alt="${card.name}"
+             loading="lazy"
+             onerror="this.classList.add('img-error')">
+        <div class="card-shine"></div>
+        <div class="card-rarity-pip" style="background:${rs.bg};color:${rs.color}">${rs.label}</div>
+        <div class="card-cond" style="background:${cs.bg};color:${cs.color}">${card.cond}</div>
+      </div>
+      <div class="card-details">
+        <div class="card-name">${card.name}</div>
+        <div class="card-set-label">${card.set}</div>
+        <div class="card-bottom">
+          <div class="card-price">$${card.price}</div>
+          <button class="add-btn" onclick="addToCart('${card.name}','${card.set}','${card.price}','${card.img}')"><i class="fa-solid fa-plus"></i> Añadir</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(wrap);
+  });
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}});
+  },{threshold:.05});
+  grid.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+}
+renderCards();
+
+/* NEWSLETTER */
+function doSubscribe(){
+  const v=document.getElementById('nlEmail').value;
+  if(!v||!v.includes('@')){document.getElementById('nlEmail').style.outline='3px solid #fff';return}
+  showToast('<i class="fa-solid fa-envelope"></i>','¡Suscrito! Recibirás los mejores drops');
+  document.getElementById('nlEmail').value='';
+}
+
+initReveal();
+</script>
+</body>
+</html>
